@@ -1,0 +1,133 @@
+#include<iostream>
+#include<vector>
+#include<queue>
+#include<omp.h>
+using namespace std;
+
+struct Node
+{
+  int data;
+  vector<Node*> children;
+};
+void bfs(Node* root)
+{
+  if(!root)
+  {
+    return ;
+  }
+  queue <Node*> q;
+  q.push(root);
+  while(!q.empty())
+  {
+    vector <Node*> cl;
+    vector <Node*> nl;
+    for(int i = 0; i < q.size();i++)
+    {
+      cl.push_back(q.front());
+      q.pop();
+    }
+    #pragma omp parellel for
+    {
+      for(int i = 0; i<cl.size();i++)
+      {
+        Node* current = cl[i];
+        #pragma omp critical
+        {
+          cout<<current->data<<" ";
+        }
+        #pragma omp critical
+        {
+          for(int j=0;j<current->children.size();j++)
+          {
+            nl.push_back(current->children[j]);
+          }
+        }
+      }
+    }
+    for(int i = 0; i<nl.size();i++)
+    {
+      q.push(nl[i]);
+    }
+  }
+}
+int main()
+{
+ Node* root = new Node();
+  root->data=1;
+  Node* child1 = new Node();
+  child1->data=2;
+  Node* child2 = new Node();
+  child2->data=3;
+  Node* grandchild = new Node();
+  grandchild->data=4;
+  child2->children.push_back(grandchild);
+  root->children.push_back(child2);
+  root->children.push_back(child1);
+
+  bfs(root);
+  return 0;
+}
+
+
+
+
+
+
+
+
+/"In this practical, we designed and implemented a parallel version of the Breadth-First Search algorithm using OpenMP.
+ We used an undirected graph (or tree) as input and parallelized the level-wise node traversal to improve performance.
+ This demonstrates how parallel computing can optimize graph traversal tasks, especially on large datasets."
+
+Conceptual Questions & Answers
+Q: What is BFS and how does it work?
+A: BFS (Breadth-First Search) is a graph traversal algorithm that visits nodes level by level, starting from the root node and exploring all its neighbors before moving to the next level.
+
+Q: Why is BFS a good candidate for parallelization?
+A: BFS can be parallelized at each level because all nodes at a level can be processed independently, making it suitable for concurrent execution.
+
+Q: What is OpenMP and why is it used here?
+A: OpenMP is an API for parallel programming in C/C++. It allows easy multithreading using compiler directives. It’s used here to speed up the BFS traversal by parallelizing the loop over current level nodes.
+
+Q: What is the difference between #pragma omp parallel and #pragma omp parallel for?
+A: #pragma omp parallel creates multiple threads, and each runs the full block. #pragma omp parallel for splits the loop iterations among threads automatically.
+
+Q: What does #pragma omp critical do and why is it used here?
+A: It ensures only one thread executes a section of code at a time. It’s used here to avoid race conditions when printing or updating shared data structures like nl.
+
+Q: What is the role of the queue in BFS?
+A: The queue stores nodes level by level and helps in managing the traversal order from one level to the next.
+
+Q: What are the advantages and limitations of parallel BFS?
+A: Advantages include faster processing on large graphs. Limitations include overhead of thread management and difficulty in synchronizing shared data.
+
+Q: Why is a vector<Node*> cl used in this code?
+A: To hold all nodes at the current level for parallel processing, since queues can’t be safely shared across threads without synchronization.
+
+Q: How does your code maintain level-order traversal in parallel execution?
+A: It first collects all current level nodes in cl, processes them in parallel, then stores the next level in nl to be pushed into the queue.
+
+Q: Could this program face race conditions? If yes, where and how are they handled?
+A: Yes, when printing or pushing into nl. These are handled using #pragma omp critical to serialize access.
+
+💻 Code-Specific Questions & Answers
+Q: What is the purpose of cl and nl vectors?
+A: cl stores current level nodes for safe parallel access; nl collects the children (next level nodes).
+
+Q: Why are nodes popped into cl before parallel processing?
+A: To avoid thread contention over the queue and make the input to parallel section thread-safe.
+
+Q: Why is #pragma omp critical used twice?
+A: Once for printing (to avoid output mixing) and once for adding children to nl (to prevent concurrent write errors).
+
+Q: What happens if #pragma omp critical is removed?
+A: Race conditions may occur, leading to mixed or missing output and corrupted nl vector.
+
+Q: How would you change this to use an adjacency list graph?
+A: Replace Node structure with an array of adjacency lists and use node indices instead of pointers.
+
+Q: Is the loop over nl suitable for parallelization?
+A: Not really, since pushing into the queue is sequential and not thread-safe without additional synchronization.
+
+Q: How would performance change for a deep tree or many children?
+A: Deep trees may limit parallelism (fewer nodes per level), while wide trees benefit from better parallel load distribution.

@@ -1,0 +1,115 @@
+#include <iostream>
+#include <vector>
+#include <omp.h>
+using namespace std;
+struct Node {
+    int data;
+    vector<Node*> neighbors;
+};
+
+void parallel_DFS(Node* node, vector<bool>& visited) {
+    #pragma omp critical
+    {
+        if (visited[node->data]) return;
+        visited[node->data] = true;
+        cout << node->data << " ";
+    }
+    #pragma omp parallel for
+    for (int i = 0; i < node->neighbors.size(); i++) {
+        Node* neighbor = node->neighbors[i];
+        #pragma omp critical
+        {
+            if (!visited[neighbor->data]) {
+                parallel_DFS(neighbor, visited);
+            }
+        }
+    }
+}
+int main() {
+    
+    vector<Node> graph(5);
+    for (int i = 0; i < 5; ++i) {
+        graph[i].data = i;
+    }    
+    
+    graph[0].neighbors.push_back(&graph[1]);
+    graph[0].neighbors.push_back(&graph[2]);
+
+
+    graph[1].neighbors.push_back(&graph[0]);
+    graph[1].neighbors.push_back(&graph[3]);
+
+    graph[2].neighbors.push_back(&graph[0]);
+    graph[2].neighbors.push_back(&graph[4]);
+
+    graph[3].neighbors.push_back(&graph[1]);
+
+    graph[4].neighbors.push_back(&graph[2]);
+
+    vector<bool> visited(graph.size(), false);
+
+    cout << "Parallel DFS Output: ";
+    #pragma omp parallel
+    {
+        #pragma omp single
+        {
+            parallel_DFS(&graph[0], visited);
+        }
+    }
+    cout << endl;
+
+    return 0;
+}
+
+
+
+
+
+
+
+
+
+/"We are implementing a parallel version of Depth-First Search using OpenMP to understand how traditional recursive
+ graph traversal algorithms can be optimized for multi-core systems. We are applying this to either a tree or an
+ undirected graph structure and adapting the DFS algorithm to run in parallel, for example by parallelizing the 
+exploration of multiple child nodes or using task-based parallelism. This helps us study both performance improvements
+ and challenges in parallelizing inherently sequential algorithms."
+
+ Conceptual Questions (Topic-Based)
+❓ What is Depth-First Search (DFS)?
+💬 DFS is a graph traversal algorithm that explores as far as possible along each branch before backtracking. It can be implemented using recursion or a stack.
+
+❓ Why is DFS considered hard to parallelize?
+💬 DFS is inherently recursive and sequential because each node depends on visiting its previous node. Parallelizing it requires careful handling to avoid revisiting nodes and managing concurrent threads.
+
+❓ What is OpenMP and how is it useful in this context?
+💬 OpenMP is an API for parallel programming in C/C++. It helps run code segments in parallel across multiple threads, useful for speeding up tasks like graph traversal if managed properly.
+
+❓ What challenges do you face when using OpenMP for recursive algorithms like DFS?
+💬 Challenges include managing shared data (like the visited array), avoiding race conditions, and dealing with load imbalance among threads.
+
+❓ What are race conditions and how do we prevent them in parallel programming?
+💬 Race conditions occur when multiple threads access and modify shared data at the same time, leading to unpredictable results. We prevent them using synchronization tools like critical sections, atomic operations, or locks.
+
+🔹 Code-Specific Questions
+❓ What data structure is used to represent the graph in this code?
+💬 A vector of Node structs is used, where each Node has a list of neighbor pointers, effectively forming an adjacency list representation.
+
+❓ Why is #pragma omp critical used twice in the parallel_DFS function?
+💬 The first critical ensures safe access to the visited array and prevents duplicate visits. The second ensures that recursive calls are only made for unvisited neighbors and avoids race conditions.
+
+❓ What would happen if we removed the second critical section?
+💬 Multiple threads might call parallel_DFS on the same unvisited neighbor at the same time, leading to duplicated work or race conditions.
+
+❓ Why is #pragma omp parallel combined with #pragma omp single in main()?
+💬 This combination ensures the DFS is launched by one thread within a parallel region, allowing the recursive DFS calls to run in parallel within the function itself.
+
+❓ How does this implementation differ from a standard (sequential) DFS?
+💬 Unlike a standard DFS that uses a single thread, this implementation allows multiple threads to explore different branches of the graph in parallel, though the parallelism is limited due to synchronization.
+
+❓ Is this implementation scalable for large graphs? Why or why not?
+💬 Not very scalable. Due to heavy use of critical sections and the recursive nature of DFS, thread overhead and contention limit performance gains on larger graphs.
+
+❓ What is the output of the program and why can it vary?
+💬 The output is the order in which nodes are visited. It can vary because multiple threads may explore different neighbors at the same time, leading to non-deterministic order of execution.
+

@@ -1,0 +1,100 @@
+#include<iostream>
+#include<omp.h>
+#include<climits>
+using namespace std;
+void min_max(int arr[],int n)
+{
+  int minV = INT_MAX;
+  int maxV = INT_MIN;
+  #pragma omp parallel for reduction(min:minV,max:maxV)
+  for(int i=0;i<n;i++)
+  {
+    if(arr[i]<minV)
+    {
+      minV=arr[i];
+    }
+    if(arr[i]>maxV)
+    {
+      maxV=arr[i];
+    }
+  }
+  cout<<"Min : "<<minV<<"\n"<<"Max : "<<maxV;
+}
+void sum(int arr[],int n)
+{
+  int sum = 0;
+  #pragma omp parallel for(+:sum)
+  for(int i = 0; i<n;i++)
+  {
+    sum+=arr[i];
+  }
+  cout<<"Sum : "<<sum<<endl;
+}
+void average(int arr[],int n)
+{
+  int sum = 0;
+  #pragma omp parallel for(+:sum)
+  for(int i= 0 ;i<n;i++)
+  {
+     sum+=arr[i];
+  }
+  cout<<"Average : "<<(double)sum/n;
+}
+int main()
+{
+    int n;
+    cout << "\nEnter the total number of elements: ";
+    cin >> n;
+    int *arr = new int[n];
+    cout << "\nEnter the elements: ";
+    for (int i = 0; i < n; i++) { 
+      cin >> arr[i]; 
+    }
+    min_max(arr,n);
+    sum(arr,n);
+    average(arr,n);
+    return 0;
+}
+
+
+
+
+
+
+
+/“In this practical, we implemented Min, Max, Sum, and Average operations using OpenMP's parallel reduction feature. 
+By applying the reduction clause in OpenMP, we allow multiple threads to compute parts of the result
+ independently and then combine them at the end. 
+This improves performance for large datasets while ensuring correct results through safe parallel computation.”
+
+Conceptual Questions
+❓ What is a reduction in OpenMP?
+✅ A reduction in OpenMP is a way to safely combine results from multiple threads into a single variable (e.g., sum, min, max) without race conditions.
+
+❓ Why do we use the reduction clause in this code?
+✅ We use it to safely compute the minimum, maximum, and sum in parallel without threads overwriting each other’s values.
+
+❓ What does reduction(min:minV, max:maxV) mean?
+✅ It tells OpenMP to perform a min reduction on minV and a max reduction on maxV across all threads.
+
+❓ What are the initial values used for min and max reductions?
+✅ For min, the initial value is INT_MAX; for max, it is INT_MIN — this ensures correct comparison during the reduction.
+
+❓ Can we calculate average directly using reduction?
+✅ Not directly, but we use reduction on the sum and then divide by the number of elements outside the parallel region.
+
+💻 Code-Specific Questions
+❓ What is the data type of the array? Why is dynamic allocation used?
+✅ The array is of type int*. Dynamic allocation allows flexibility in handling user-defined input sizes at runtime.
+
+❓ Why is the typecast (double) used in average calculation?
+✅ To ensure floating-point division is performed instead of integer division, which would lose decimal precision.
+
+❓ What would happen if we didn't use reduction and accessed shared variables directly inside the parallel loop?
+✅ We would face race conditions where multiple threads may write to the same variable simultaneously, causing incorrect results.
+
+❓ What is the time complexity of these operations in parallel vs sequential execution?
+✅ Theoretically, the operations are still O(n), but parallel execution can reduce actual runtime by using multiple threads.
+
+❓ How do we control the number of threads used in OpenMP?
+✅ By setting omp_set_num_threads(n) in code or using the OMP_NUM_THREADS environment variable.

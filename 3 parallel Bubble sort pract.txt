@@ -1,0 +1,91 @@
+#include <iostream>
+#include <stdlib.h>
+#include <omp.h>
+using namespace std;
+void swap(int &a, int &b){
+    int temp; temp = a; a = b; b = temp;
+}
+void bubbleSort(int *a, int n){
+    for(int i = 0 ; i<n; i++)
+    {
+        int first = i%2;
+        #pragma omp parallel for shared(a, first)
+        for(int j=first; j<n-1; j+=2)
+            if(a[j]>a[j+1])
+                swap(a[j], a[j+1]);  }}
+int main(){
+    int *a, n;
+   cout << "\nEnter total number of elements => ";
+    cin >> n;
+     a= new int[n];
+    cout << "\nEnter elements => ";
+    for (int i = 0; i < n; i++) {
+        cin >> a[i];}
+    bubbleSort(a, n);
+    cout << "\nSorted array is => ";
+    for (int i = 0; i < n; i++) {
+        cout << a[i] << endl;
+    }
+    delete[] a;  // Free dynamically allocated memory
+    return 0;
+}
+
+We have implemented Bubble Sort in both sequential and parallel versions using OpenMP. We tested both versions on 
+various input sizes and measured their execution times to observe the performance gain achieved through parallelization. 
+The goal is to understand how OpenMP helps in speeding up computation by utilizing multiple cores.”
+
+
+
+
+/General Conceptual Questions
+What is OpenMP and why is it used in this program?
+
+(Tests understanding of OpenMP as a parallelization tool.)
+
+What is the role of the directive #pragma omp parallel for?
+
+(Tests knowledge of parallelizing loops using OpenMP.)
+
+What does the variable first = i % 2 do in this code?
+
+(Tests understanding of odd-even transposition logic.)
+
+Why can’t the standard bubble sort loop be parallelized easily?
+
+(Tests awareness of data dependencies in sorting algorithms.)
+
+What does shared(a, first) mean in the OpenMP directive?
+
+(Tests understanding of variable scoping in OpenMP.)
+
+What will happen if you remove the shared clause? Will it still work?
+
+(Tests awareness of default variable scoping behavior.)
+
+How does the performance of this code change with larger input sizes?
+
+(Tests understanding of parallelism benefits.)
+
+What happens if multiple threads try to swap the same pair of elements?
+
+(Tests knowledge of race conditions.)
+
+What is the time complexity of sequential vs parallel bubble sort?
+
+(Tests algorithm complexity knowledge.)
+
+Why is bubble sort not preferred in real-world large datasets despite parallelization?
+
+(Tests understanding of algorithm efficiency.)
+
+💻 Code-Specific Questions
+Why is memory allocated dynamically with new int[n] instead of using a static array?
+
+What will happen if n is a large number, say 1000000?
+
+Why is delete[] a; important at the end of the program?
+
+What would happen we used swap() without reference parameters?
+
+Can you modify this code to also measure execution time using omp_get_wtime()?
+

@@ -1,0 +1,99 @@
+#include <iostream>
+#include <omp.h>
+using namespace std;
+void merge(int arr[], int l, int m, int r) {
+    int n1 = m - l + 1;  // Size of left array
+    int n2 = r - m;      // Size of right array
+    int* left = new int[n1];
+    int* right = new int[n2];
+    for (int i = 0; i < n1; i++)
+        left[i] = arr[l + i];
+    for (int j = 0; j < n2; j++)
+        right[j] = arr[m + 1 + j];
+    int i = 0, j = 0, k = l;
+    while (i < n1 && j < n2)
+        arr[k++] = (left[i] <= right[j]) ? left[i++] : right[j++];
+    while (i < n1) arr[k++] = left[i++];
+    while (j < n2) arr[k++] = right[j++];
+    delete[] left;
+    delete[] right; }
+void mergeSort(int *arr, int low, int high) {
+    if (low < high) {
+        int mid = (low + high) / 2;
+        #pragma omp parallel sections
+        {
+            #pragma omp section
+            mergeSort(arr, low, mid);
+            #pragma omp section
+            mergeSort(arr, mid + 1, high);
+        }
+        merge(arr, low, mid, high);}}
+int main() {
+      int n;
+    cout << "Enter the number of elements: ";
+    cin >> n;
+    int* arr = new int[n];
+    cout << "Enter " << n << " elements:\n";
+    for (int i = 0; i < n; ++i)
+        cin >> arr[i];
+    mergeSort(arr, 0, n - 1);
+    cout << "Sorted array:\n";
+    for (int i = 0; i < n; ++i)
+        cout << arr[i] << " ";
+    cout << endl;
+    delete[] arr;
+    return 0;
+}
+
+
+
+
+
+
+/“In this practical, we implemented Merge Sort both sequentially and in parallel using OpenMP. In the parallel version, 
+we used recursive splitting and executed the two halves in parallel using OpenMP tasks. We tested both versions with 
+different input sizes to measure and compare their execution times. This helps us analyze the performance gain achieved 
+by parallelization in recursive divide-and-conquer algorithms like Merge Sort.”
+
+
+
+
+Conceptual Questions (OpenMP & Merge Sort):
+What is Merge Sort and how does it work?
+→ Tests understanding of the divide-and-conquer approach.
+
+How is parallelism introduced in this Merge Sort implementation?
+→ Tests ability to identify parallel sections using OpenMP.
+
+What does #pragma omp parallel sections and #pragma omp section mean?
+→ Checks understanding of OpenMP constructs for parallel execution.
+
+Why is Merge Sort better suited for parallelization than Bubble Sort?
+→ Evaluates understanding of algorithm structure and scalability.
+
+What would happen if you didn’t use OpenMP sections here?
+→ Tests awareness of performance difference between sequential and parallel execution.
+
+What happens if the input size is very small—will parallelism help? Why or why not?
+→ Tests critical thinking about overhead of thread creation.
+
+Why is dynamic memory allocation used inside the merge function?
+→ Tests understanding of temporary array usage in merge operation.
+
+What is the time complexity of Merge Sort? Does it change with OpenMP?
+→ Evaluates grasp of theoretical performance vs practical results.
+
+💻 Code-Specific Questions:
+Explain the role of the merge() function.
+
+What is the purpose of mid = (low + high) / 2?
+
+What does the mergeSort() function do recursively?
+
+Why do we need to delete left and right arrays in merge()?
+
+What happens if you don’t deallocate memory after merging?
+
+Can you modify this code to measure the execution time?
+
+Why is arr[k++] = ... used instead of arr[k] = ...; k++;?
